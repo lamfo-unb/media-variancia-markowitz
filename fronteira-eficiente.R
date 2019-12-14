@@ -10,7 +10,7 @@ library(tseries)
 # Carregando dados--------------------------------------------------------------
 dados <- read.csv2('dados/retornos-diarios.csv')
 
-ativos <- c("ABEV3", "ITSA4", "AZUL4", "LAME4", "PETR4")
+ativos <- c("ABEV3", "ITSA4", "VALE3", "LAME4", "PETR4")
 carteira  <- dados[, ativos]
 carteira <- as.matrix(carteira)
 
@@ -29,6 +29,13 @@ carteira <- as.matrix(carteira)
 # Processando dados-------------------------------------------------------------
 
 retornos_esperados <- apply(carteira, MARGIN = 2, mean)
+riscos <- apply(carteira, MARGIN = 2, sd)
+
+ativos <- data.frame(
+  acao = names(retornos_esperados),
+  risco = riscos,
+  retorno = retornos_esperados
+)
 
 retorno_min <- 0.5*min(retornos_esperados)
 retorno_max <- 1.5*max(retornos_esperados)
@@ -81,13 +88,17 @@ dados_plot <- data.frame(
 )
 
 dados_plot %>% 
-  ggplot(aes(x = retorno, y = risco))+
+  ggplot(aes(x = retorno, y = risco, color = '#E7B800'))+
   geom_point()+
-  geom_line() +
+  geom_line(size = 1)+
+  geom_point(data = ativos, aes(x = retorno, y = risco, color = acao))+
+  geom_text(data = ativos, aes(x = retorno, y = risco, label = acao, color = acao))+
   coord_flip()+
   labs(
     x = 'Retorno',
     y = 'Risco',
-    title = 'Fronteira Eficiente'
-  )
+    title = 'Fronteira Eficiente',
+    color = ''
+  )+
+  theme(legend.position = 'none')
 
