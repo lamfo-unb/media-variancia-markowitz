@@ -84,5 +84,6 @@ cov(teste)
 
 # Juntando em um objeto xts
 retornos <- xts_to_data.frame(retornos_mensais)
+names(retornos) <- gsub('\\.SA$', '', names(retornos))
 write.csv2(retornos, file = 'dados/retornos-mensais.csv', na = '',
            row.names = FALSE)
