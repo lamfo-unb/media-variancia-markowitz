@@ -8,22 +8,11 @@ library(tseries)
 #library(quantmod)
 
 # Carregando dados--------------------------------------------------------------
-dados <- read.csv2('dados/retornos-diarios.csv')
+dados <- read.csv2('dados/retornos-mensais.csv')
 
-ativos <- c("ABEV3", "ITSA4", "VALE3", "LAME4", "PETR4")
-carteira  <- dados[, ativos]
+carteira  <- dados[,-1]
 carteira <- as.matrix(carteira)
-
-# simbolos <- c("OIBR3.SA", "ABEV3.SA", " ITSA4.SA", " AZUL4.SA", " LAME4.SA",
-#               "PETR3.SA")
-# # Data inicio e fim
-# startdate <-  Sys.Date() - 730
-# enddate <- Sys.Date()
-# 
-# # Fazendo download
-# env_simb <- new.env()
-# getSymbols(Symbols = simbolos, env = env_simb, src = 'yahoo',
-#            from = startdate, to = enddate)
+carteira <- na.omit(carteira)
 
 
 # Processando dados-------------------------------------------------------------
