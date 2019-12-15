@@ -23,6 +23,7 @@ ativos <- as.list(ativos)
 # Funções-----------------------------------------------------------------------
 
 get_preco_fechamento <- function(x){
+  ## Obtem preço de fechamento
   
   x[, base::grepl(pattern = '\\.Close$', x = dimnames(x)[[2]])]
   
@@ -39,6 +40,7 @@ list_to_xts <- function(list_xts){
 }
 
 xts_to_data.frame <- function(x){
+  ## Transforma objeto xts em data.frame
   
   df <- as.data.frame(x)
   df <- data.frame(
@@ -53,6 +55,7 @@ xts_to_data.frame <- function(x){
 }
 
 retornos_esperados <- function(x, na.rm = FALSE){
+  ## Estima retorno esperado de cada ativo
   
   stopifnot(is.matrix(x))
   
