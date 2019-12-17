@@ -8,9 +8,11 @@ library(xts)
 # Download----------------------------------------------------------------------
 
 # Definindo parâmetros
-simbolos <- c("ITSA4.SA", "VVAR3.SA", "FNOR11.SA", "PETR4.SA", "BOVV11.SA")
+#simbolos <- c("ITSA4.SA", "VVAR3.SA", "FNOR11.SA", "PETR4.SA", "BOVV11.SA")
+simbolos <- c("ITSA4.SA", "VVAR3.SA", "NATU3.SA", "PETR4.SA", "ABEV3.SA")
 
-startdate <-  '2016-10-27' # Sys.Date() - 730
+
+startdate <-  '2011-12-15' # Sys.Date() - 730
 enddate <- '2019-12-15' # Sys.Date()
 
 # Fazendo download
@@ -67,6 +69,30 @@ retornos_esperados <- function(x, na.rm = FALSE){
 
 # Obtendo apenas os preços de fechamento
 ativos <- lapply(X = ativos, FUN = get_preco_fechamento)
+
+#------------------------#
+# teste
+
+precos_fech <- list_to_xts(ativos)
+
+precos_fech <- xts_to_data.frame(precos_fech)
+
+precos_fech$periodo <- as.Date(precos_fech$periodo)
+
+precos_fech %>% 
+  ggplot(aes(x = periodo))+
+  geom_line(aes(y = ABEV3.SA, color = 'ABEV3'))+
+  geom_line(aes(y = VVAR3.SA, color = 'VVAR3'))+
+  geom_line(aes(y = PETR4.SA, color = 'PETR4'))+
+  geom_line(aes(y = ITSA4.SA, color = 'ITSA4'))+
+  geom_line(aes(y = NATU3.SA, color = 'NATU3'))+
+  labs(
+    y = 'Preço/Índice',
+    x = 'Periodo',
+    color = 'Ativo'
+  )
+
+#------------------------#
 
 # calculando retornos mensais
 retornos_men <- lapply(ativos, quantmod::monthlyReturn, USE.NAMES = TRUE)
