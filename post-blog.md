@@ -230,7 +230,7 @@ dados_plot %>%
   theme(legend.position = 'none')
 ```
 
-![](post-blog_files/figure-html/fronteira_plot-1.png)<!-- -->
+<img src="post-blog_files/figure-html/fronteira_plot-1.png" style="display: block; margin: auto;" />
 
 Além da fronteira foi plotado os cinco ativos escolhidos. Com esse gráfico é fácil constatar que podemos obter o mesmo retorno de *VVAR3*, que é o ativo de maior retorno, com um risco menor que esse ativos apenas fazendo uma combinação. Ou alternativamente, podemos obter um retorno maior *VVAR3* com mesmo nível de risco dele. Tais resultados só são possíveis devido aos efeitos da diversificação.
 

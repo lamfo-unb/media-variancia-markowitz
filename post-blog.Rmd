@@ -223,7 +223,7 @@ dados_plot <- data.frame(
 
 O `data.frame` `dados_plot` contêm o dados de risco e retorno das carteiras ótimas. Com eles é possível plotar a fronteira eficiente, como poder ser visto no gráfico a seguir:
 
-```{r fronteira_plot}
+```{r fronteira_plot, fig.align='center'}
 
 # Plotando fronteira eficiente
 dados_plot %>% 
