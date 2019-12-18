@@ -1,0 +1,29 @@
+Estrutura do post
+-----------------------------------------------
+1. Contextualização (Rápido)
+2. Risco e retorno
+    2.1. Ativo individual
+    2.2 Carteira de ativos
+    2.3 Definição matricial
+3. Tipos de risco
+    3.1 Risco idiossincrático
+    3.2 Risco sistêmico
+4. Diversificação
+5. Escolha de uma carteira
+    5.1 Princípio da dominância
+    5.2 Carteiras eficientes
+6. Fronteira eficiente
+    6.1 Definição do problema de otimização
+7. Exemplo usando o R
+    7.1 Usar as duas ações mais transacionadas na bolsa e o índice Bovespa
+    7.2	Implementar algorítimo para cálculo da fronteira eficiente
+8. Outras atividades
+    8.1 Revisão conteúdo
+    8.2 Gerar arquivo Rmarkdown
+
+----------------------------------------------
+Divisão
+- Alícia: 5 e 6
+- Neuremberg: 7 e 8.1
+- Rubens: 1, 2 e 8.2
+- Sarah: 3 e 4 (editado) 
