@@ -58,7 +58,7 @@ df_ %>%
   facet_wrap(~ativo)+
   geom_histogram()
 
-plot_precos(df_, 'periodo', c('ABEV3', 'ITSA4', 'PETR4', 'VVAR3'))
+plot_precos(df_, 'periodo', c('ABEV3', 'ITSA4', 'PETR4', 'NATU3'))
 
 m <- as.matrix(precos[, -1])
 m <- na.omit(m)

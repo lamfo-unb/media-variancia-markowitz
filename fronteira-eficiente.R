@@ -66,6 +66,7 @@ get_risco <- function(res){
 
 # Gráficos----------------------------------------------------------------------
 
+# primeira fronteira
 fronteira <- lapply(
   X = retornos_seq,
   FUN = carteira_otima,
@@ -73,15 +74,29 @@ fronteira <- lapply(
   shorts = TRUE
 )
 
-dados_plot <- data.frame(
-  retorno = get_retorno(fronteira),
-  risco = get_risco(fronteira)
+# Fronteira sem NATU3
+nomes_ativ <- c("ABEV3", "PETR4", "ITSA4")
+
+fronteira2 <- lapply(
+  X = retornos_seq,
+  FUN = carteira_otima,
+  ativos = carteira[, nomes_ativ],
+  shorts = TRUE
 )
 
+# Criando data frame
+dados_plot <- data.frame(
+  retorno = get_retorno(fronteira),
+  risco = get_risco(fronteira),
+  retorno2 = get_retorno(fronteira2),
+  risco2 = get_risco(fronteira2)
+)
+
+# 
 dados_plot %>% 
   ggplot(aes(x = retorno, y = risco, color = '#E7B800'))+
-  geom_point()+
   geom_line(size = 1)+
+  geom_line(size = 1, aes(y = risco2), color = '#5F9EA0')+
   geom_point(data = ativos, aes(x = retorno, y = risco, color = acao))+
   geom_text(data = ativos, aes(x = retorno, y = risco, label = acao, color = acao))+
   coord_flip()+
@@ -93,3 +108,4 @@ dados_plot %>%
   )+
   theme(legend.position = 'none')
 
+cor(carteira)
