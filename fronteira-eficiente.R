@@ -17,6 +17,7 @@ carteira <- na.omit(carteira)
 
 # Processando dados-------------------------------------------------------------
 
+# Risco e retornos esperados dos ativos
 retornos_esperados <- apply(carteira, MARGIN = 2, mean)
 riscos <- apply(carteira, MARGIN = 2, sd)
 
@@ -26,6 +27,7 @@ ativos <- data.frame(
   retorno = retornos_esperados
 )
 
+# Retornos desejados
 retorno_min <- 0.5*min(retornos_esperados)
 retorno_max <- 1.5*max(retornos_esperados)
 

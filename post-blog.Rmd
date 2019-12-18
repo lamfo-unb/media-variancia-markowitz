@@ -15,26 +15,27 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Para ilustrar a discussão teórica feita até aqui, vamos usar o R para calcular uma fronteira eficiente para um conjunto de ativos.
 
-###  Obtendo e processando dados
+### Obtendo dados
 
 Inicialmente vamos carregar o pacote necessários:
 
-```{r ambiente, eval=FALSE}
+```{r ambiente, eval=TRUE, message=FALSE}
 
 library(ggplot2)
 library(magrittr)
 library(quantmod)
 library(xts)
 library(tseries)
+library(ggplot2)
 
 ```
+
 
 Caso não possua esses pacotes instalados você pode usar `install.packages('nome_pacote')` para instalá-los e depois carregue eles usando os comandos acima.
 
 Usaremos o pacote `quantmod` e `xts` para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:
 
 * ITSA4 - Itaú SA Investimentos;
-* VVAR3 - Via Varejo SA, controladora das empresas Casas Bahias e Ponto Frio;
 * NATU3 - Natura;
 * PETR4 - Petrobras;
 * ABEV3 - Ambev SA.
@@ -60,6 +61,8 @@ ativos <- as.list(ativos)
 
 Se tudo tiver corrido corretamente os dados das ações foram baixados em carregados no *environment* `ativos` que posteriormente foi transformando em uma lista. Usaremos lista frequentemente nesse exercício, elas simplicam bastante a transformação de dados ao permitir que uma operação seja realizada sobre todos os seu elementos usando a função `lappy()`. 
 
+### Processando os dados
+
 Agora que temos os dados, vamos realizar um processamento de modo a obter o retorno mensais dessas séries, mas antes disso vamos que criar algumas funções para nos auxiliar nisso:
 
 ```{r funcoes_processamento, eval=TRUE}
@@ -80,9 +83,24 @@ list_to_xts <- function(list_xts){
   return(res)
 }
 
+xts_to_data.frame <- function(x){
+  ## Transforma objeto xts em data.frame
+  
+  df <- as.data.frame(x)
+  df <- data.frame(
+    periodo = row.names(df),
+    df
+  )
+  row.names(df) <- NULL
+  
+  return(df)
+}
+
 ```
 
-Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício usaremos o preço de fechamento do ativos e partir deles calcularemos o retorno mensal.
+Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício usaremos, o preço de fechamento do ativos e partir deles calcularemos o retorno mensal, por isso percisamos da função `get_preco_fechamento()`.
+
+Já a função `list_to_xts()` recebe uma lista de objetos `xts` e a transforma em apenas um objeto `xts` e, por fim, a função `xts_to_data.frame` transforma um objeto `xts` em um `data.frame` mantendo o período dos dados como uma coluna do `data.frame` resultante. A seguir, vamos calcular os retornos mensais dos ativos:
 
 ```{r retorno_mensal, eval=FALSE}
 
@@ -103,33 +121,101 @@ carteira <- na.omit(carteira)
 
 Aplicando a função `get_preco_fechamento()` por meio da função `lapply()` obtemos uma lista com o preço de fechamento de cada ativo, procedimento semelhante foi feito para calcular o retorno mensal de cada ativo. Ao final, a matriz `carteira` representa a carteira contendo os retornos dos ativos. 
 
+### Explorando dados
+
 ```{r carrega_data, eval= TRUE, echo=FALSE, message=FALSE}
 
-library(ggplot2)
-library(magrittr)
-library(quantmod)
-library(xts)
-library(tseries)
+# Carregando dados localmente para evitar usar o quantmod
 
+#-------------------------#
+# preços de fechamento
+precos <- read.csv2(file = 'dados/precos-fechamento.csv', stringsAsFactors = F)
+
+#-------------------------#
+# Retorno mensais dos ativos
 dados <- read.csv2('dados/retornos-mensais.csv')
-
 carteira  <- dados[, -1]
 carteira <- as.matrix(carteira)
 carteira <- na.omit(carteira)
-
 rm(dados)
+
+```
+Antes de prosseguirmos, vamos da uma olhada na evolução dos preços de fechamento dos ativos. Para isso vamos usar as seguintes funções:
+
+```{r funcoes_explorar_precos}
+
+precos_tidy <- function(data, periodo){
+  ## Transforma os precos para o formato long
+  
+  cols <- base::setdiff(names(data), periodo)
+  res <- tidyr::gather(data, key = 'ativo', value = 'precos', cols)
+  
+  res[, periodo] <- as.Date(as.character(res[[periodo]]))
+  class(res) <- c('carteira', class(res))
+  
+  return(res)
+  
+}
+
+plot_precos <- function(data, periodo, filter = NULL){
+  ## Plota a evolução dos preços
+  
+  # Validação
+  stopifnot('carteira' %in% class(data))
+  
+  # Quotando variável
+  periodo <- dplyr::sym(periodo)
+  
+  # Filtrando ativos
+  if(!is.null(filter)){
+    data <- dplyr::filter(data, ativo %in% filter)
+  }
+  
+  ggplot(data, aes(x = !!periodo, y = precos, color = ativo))+
+    geom_line()+
+    labs(
+      x = '',
+      y = 'Preço de fechamento',
+      color = 'Ativo',
+      title = 'Evolução dos ativos'
+    )
+}
+
 ```
 
-<!-- ### Explorando as séries -->
+Os dados dos ativos estão organizados de forma que cada coluna representa uma ativo diferente, diz-se que os dados estão num formato `wide`. Entretanto, o `ggplot2` foi construido para seguir uma lógica em os dados estão no formato `long`, também chamado de `tidy`. Nesse caso, os dados sobre os ativos são organizados em duas colunas: uma conterá o nome do ativo e outra o preço da ação correspondente respeitando o período da observação. A função `precos_tidy()` faz justamente essa transformação.
 
-<!-- * Visualizar evolução do preços -->
-<!-- * Visualizar evolução dos retorno? -->
+A função `plot_precos()` toma o preços no formato `long` e cria um gráfico usando as funções do `ggplot2`. A seguir, plotamos a evolução dos preços de fechamento das ações e calcular as correlações entres o preços.
 
-<!-- ### Carteira ótima -->
+```{r explorando_precos, fig.align='center'}
 
-<!-- * Mostrar como usar a função `portfolio.optm()` do pacote `tseries` -->
+precos_ <- precos_tidy(precos, 'periodo')
+
+plot_precos(precos_, 'periodo')
+
+# calculando correlação entre os preços
+m <- as.matrix(precos[, -1])
+m <- na.omit(m)
+cor(m)
+
+```
+
+Chama a atenção a alta correlação exitente entre preços das ações da Petrobras, *PETR4*, e  da Natura *NATU3*. Correlação alcança o valor de 74,65%, isso é considerado relativamente alto. Isso é um pouco curioso, já que essas empresas são de setores diferentes. Tal relação fica mais clara no gráfico a seguir:
+
+```{r grafico_petr4_natu3, fig.align='center'}
+
+plot_precos(precos_, 'periodo', filter = c('PETR4', 'NATU3'))
+
+```
+
+Os dois ativos apresentam a tendência de queda entre 2013 e meados de 2016, após esse período passa a ter uma tendência ascendente. Talvez a mudaça de governo ocorrido em 2016 tenha sido um motivo relevante para esse comportamento.
+
 
 ### Calculando fronteira eficiente
+
+**TO DO**
+
+* Fazer com que a função `carteira_otima()` receba uma lista como argumento
 
 O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância. Vamos usar essa função para calcular a fronteira eficiente para o 5 ativos escolhidos.
 
@@ -172,7 +258,6 @@ get_risco <- function(res){
 ```
 
 Vamos calcular o retorno esperados para o ativos e seus respectivos riscos e guardar tais informações em um `data.frame`. Após isso, vamos gerar um vetor de retornos desejados para as carteira ótimas a fim de gerar a fronteira eficiente.
-
 
 ```{r dados_ativos}
 

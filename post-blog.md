@@ -13,7 +13,7 @@ output:
 
 Para ilustrar a discussão teórica feita até aqui, vamos usar o R para calcular uma fronteira eficiente para um conjunto de ativos.
 
-###  Obtendo e processando dados
+### Obtendo dados
 
 Inicialmente vamos carregar o pacote necessários:
 
@@ -24,14 +24,15 @@ library(magrittr)
 library(quantmod)
 library(xts)
 library(tseries)
+library(ggplot2)
 ```
+
 
 Caso não possua esses pacotes instalados você pode usar `install.packages('nome_pacote')` para instalá-los e depois carregue eles usando os comandos acima.
 
 Usaremos o pacote `quantmod` e `xts` para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:
 
 * ITSA4 - Itaú SA Investimentos;
-* VVAR3 - Via Varejo SA, controladora das empresas Casas Bahias e Ponto Frio;
 * NATU3 - Natura;
 * PETR4 - Petrobras;
 * ABEV3 - Ambev SA.
@@ -56,6 +57,8 @@ ativos <- as.list(ativos)
 
 Se tudo tiver corrido corretamente os dados das ações foram baixados em carregados no *environment* `ativos` que posteriormente foi transformando em uma lista. Usaremos lista frequentemente nesse exercício, elas simplicam bastante a transformação de dados ao permitir que uma operação seja realizada sobre todos os seu elementos usando a função `lappy()`. 
 
+### Processando os dados
+
 Agora que temos os dados, vamos realizar um processamento de modo a obter o retorno mensais dessas séries, mas antes disso vamos que criar algumas funções para nos auxiliar nisso:
 
 
@@ -75,9 +78,24 @@ list_to_xts <- function(list_xts){
   
   return(res)
 }
+
+xts_to_data.frame <- function(x){
+  ## Transforma objeto xts em data.frame
+  
+  df <- as.data.frame(x)
+  df <- data.frame(
+    periodo = row.names(df),
+    df
+  )
+  row.names(df) <- NULL
+  
+  return(df)
+}
 ```
 
-Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício usaremos o preço de fechamento do ativos e partir deles calcularemos o retorno mensal.
+Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício usaremos, o preço de fechamento do ativos e partir deles calcularemos o retorno mensal, por isso percisamos da função `get_preco_fechamento()`.
+
+Já a função `list_to_xts()` recebe uma lista de objetos `xts` e a transforma em apenas um objeto `xts` e, por fim, a função `xts_to_data.frame` transforma um objeto `xts` em um `data.frame` mantendo o período dos dados como uma coluna do `data.frame` resultante. A seguir, vamos calcular os retornos mensais dos ativos:
 
 
 ```r
@@ -97,18 +115,96 @@ carteira <- na.omit(carteira)
 
 Aplicando a função `get_preco_fechamento()` por meio da função `lapply()` obtemos uma lista com o preço de fechamento de cada ativo, procedimento semelhante foi feito para calcular o retorno mensal de cada ativo. Ao final, a matriz `carteira` representa a carteira contendo os retornos dos ativos. 
 
+### Explorando dados
 
 
-<!-- ### Explorando as séries -->
+Antes de prosseguirmos, vamos da uma olhada na evolução dos preços de fechamento dos ativos. Para isso vamos usar as seguintes funções:
 
-<!-- * Visualizar evolução do preços -->
-<!-- * Visualizar evolução dos retorno? -->
 
-<!-- ### Carteira ótima -->
+```r
+precos_tidy <- function(data, periodo){
+  ## Transforma os precos para o formato long
+  
+  cols <- base::setdiff(names(data), periodo)
+  res <- tidyr::gather(data, key = 'ativo', value = 'precos', cols)
+  
+  res[, periodo] <- as.Date(as.character(res[[periodo]]))
+  class(res) <- c('carteira', class(res))
+  
+  return(res)
+  
+}
 
-<!-- * Mostrar como usar a função `portfolio.optm()` do pacote `tseries` -->
+plot_precos <- function(data, periodo, filter = NULL){
+  ## Plota a evolução dos preços
+  
+  # Validação
+  stopifnot('carteira' %in% class(data))
+  
+  # Quotando variável
+  periodo <- dplyr::sym(periodo)
+  
+  # Filtrando ativos
+  if(!is.null(filter)){
+    data <- dplyr::filter(data, ativo %in% filter)
+  }
+  
+  ggplot(data, aes(x = !!periodo, y = precos, color = ativo))+
+    geom_line()+
+    labs(
+      x = '',
+      y = 'Preço de fechamento',
+      color = 'Ativo',
+      title = 'Evolução dos ativos'
+    )
+}
+```
+
+Os dados dos ativos estão organizados de forma que cada coluna representa uma ativo diferente, diz-se que os dados estão num formato `wide`. Entretanto, o `ggplot2` foi construido para seguir uma lógica em os dados estão no formato `long`, também chamado de `tidy`. Nesse caso, os dados sobre os ativos são organizados em duas colunas: uma conterá o nome do ativo e outra o preço da ação correspondente respeitando o período da observação. A função `precos_tidy()` faz justamente essa transformação.
+
+A função `plot_precos()` toma o preços no formato `long` e cria um gráfico usando as funções do `ggplot2`. A seguir, plotamos a evolução dos preços de fechamento das ações e calcular as correlações entres o preços.
+
+
+```r
+precos_ <- precos_tidy(precos, 'periodo')
+
+plot_precos(precos_, 'periodo')
+```
+
+<img src="post-blog_files/figure-html/explorando_precos-1.png" style="display: block; margin: auto;" />
+
+```r
+# calculando correlação entre os preços
+m <- as.matrix(precos[, -1])
+m <- na.omit(m)
+cor(m)
+```
+
+```
+##            ABEV3      NATU3      PETR4     ITSA4
+## ABEV3  1.0000000 -0.3243479 -0.2361517 0.4825303
+## NATU3 -0.3243479  1.0000000  0.7464562 0.2422055
+## PETR4 -0.2361517  0.7464562  1.0000000 0.5854143
+## ITSA4  0.4825303  0.2422055  0.5854143 1.0000000
+```
+
+Chama a atenção a alta correlação exitente entre preços das ações da Petrobras, *PETR4*, e  da Natura *NATU3*. Correlação alcança o valor de 74,65%, isso é considerado relativamente alto. Isso é um pouco curioso, já que essas empresas são de setores diferentes. Tal relação fica mais clara no gráfico a seguir:
+
+
+```r
+plot_precos(precos_, 'periodo', filter = c('PETR4', 'NATU3'))
+```
+
+<img src="post-blog_files/figure-html/grafico_petr4_natu3-1.png" style="display: block; margin: auto;" />
+
+Os dois ativos apresentam a tendência de queda entre 2013 e meados de 2016, após esse período passa a ter uma tendência ascendente. Talvez a mudaça de governo ocorrido em 2016 tenha sido um motivo relevante para esse comportamento.
+
 
 ### Calculando fronteira eficiente
+
+**TO DO**
+
+* Fazer com que a função `carteira_otima()` receba uma lista como argumento
 
 O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância. Vamos usar essa função para calcular a fronteira eficiente para o 5 ativos escolhidos.
 
@@ -152,7 +248,6 @@ get_risco <- function(res){
 Vamos calcular o retorno esperados para o ativos e seus respectivos riscos e guardar tais informações em um `data.frame`. Após isso, vamos gerar um vetor de retornos desejados para as carteira ótimas a fim de gerar a fronteira eficiente.
 
 
-
 ```r
 retornos_esperados <- apply(carteira, MARGIN = 2, mean)
 riscos <- apply(carteira, MARGIN = 2, sd)
@@ -168,12 +263,11 @@ ativos
 ```
 
 ```
-##    acao      risco     retorno
-## 1 VVAR3 0.18831968 0.029281693
-## 2 ABEV3 0.05423274 0.008092459
-## 3 NATU3 0.09338029 0.011617998
-## 4 PETR4 0.13950733 0.010620085
-## 5 ITSA4 0.07567392 0.010554902
+##    acao      risco    retorno
+## 1 ABEV3 0.05395006 0.00815532
+## 2 NATU3 0.09332690 0.01254119
+## 3 PETR4 0.13895500 0.01134941
+## 4 ITSA4 0.07556379 0.01122900
 ```
 
 De modo geral, os ativos com maior retorno possuem o maior risco também. A Via Varejo *VVAR3* apresenta o maior retorno, 2,9%, e o maior risco, 18,8%; já a Ambev (*ABEV3*) apresenta o menor retorno, 0,8%, com o menor risco 5,4%. Note que estamos estimando o retorno esperado dos ativos como sendo o média do retorno histórico, entretanto, essa é uma abordagem ingênua que implica em uma série de problemas como: não há garantias do que o que ocorreu no passado ocorrerá no futuro; dependendo do períodos observado, a média do retorno histórico é diferente.

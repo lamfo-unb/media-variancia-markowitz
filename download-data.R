@@ -3,14 +3,13 @@
 # Ambiente----------------------------------------------------------------------
 rm(list = ls())
 library(quantmod)
-library(xts)
+
 
 # Download----------------------------------------------------------------------
 
 # Definindo parâmetros
-#simbolos <- c("ITSA4.SA", "VVAR3.SA", "FNOR11.SA", "PETR4.SA", "BOVV11.SA")
-simbolos <- c("ITSA4.SA", "VVAR3.SA", "NATU3.SA", "PETR4.SA", "ABEV3.SA")
-
+#simbolos <- c("ITSA4.SA", "VVAR3.SA", "NATU3.SA", "PETR4.SA", "ABEV3.SA")
+simbolos <- c("ITSA4.SA", "NATU3.SA", "PETR4.SA", "ABEV3.SA")
 
 startdate <-  '2011-12-15' # Sys.Date() - 730
 enddate <- '2019-12-15' # Sys.Date()
@@ -71,28 +70,20 @@ retornos_esperados <- function(x, na.rm = FALSE){
 ativos <- lapply(X = ativos, FUN = get_preco_fechamento)
 
 #------------------------#
-# teste
+# PREÇOS DE FECHAMENTO
 
-precos_fech <- list_to_xts(ativos)
+# Guardando preços de fechamento em um data.frame
+precos_fechamento <- list_to_xts(ativos)
 
-precos_fech <- xts_to_data.frame(precos_fech)
+precos_fechamento <- xts_to_data.frame(precos_fechamento)
 
-precos_fech$periodo <- as.Date(precos_fech$periodo)
+precos_fechamento$periodo <- as.Date(precos_fechamento$periodo)
 
-precos_fech %>% 
-  ggplot(aes(x = periodo))+
-  geom_line(aes(y = ABEV3.SA, color = 'ABEV3'))+
-  geom_line(aes(y = VVAR3.SA, color = 'VVAR3'))+
-  geom_line(aes(y = PETR4.SA, color = 'PETR4'))+
-  geom_line(aes(y = ITSA4.SA, color = 'ITSA4'))+
-  geom_line(aes(y = NATU3.SA, color = 'NATU3'))+
-  labs(
-    y = 'Preço/Índice',
-    x = 'Periodo',
-    color = 'Ativo'
-  )
+names(precos_fechamento) <- gsub('\\.SA$', '', names(precos_fechamento))
+
 
 #------------------------#
+# RETORNONS MENSAIS
 
 # calculando retornos mensais
 retornos_men <- lapply(ativos, quantmod::monthlyReturn, USE.NAMES = TRUE)
@@ -111,5 +102,19 @@ cov(teste)
 # Juntando em um objeto xts
 retornos <- xts_to_data.frame(retornos_mensais)
 names(retornos) <- gsub('\\.SA$', '', names(retornos))
-write.csv2(retornos, file = 'dados/retornos-mensais.csv', na = '',
-           row.names = FALSE)
+
+# Exportando dados processados--------------------------------------------------
+
+write.csv2(
+  x = retornos,
+  file = 'dados/retornos-mensais.csv',
+  na = '',
+  row.names = FALSE
+)
+
+write.csv2(
+  x = precos_fechamento,
+  file = 'dados/precos-fechamento.csv',
+  row.names = FALSE,
+  na = ''
+)
