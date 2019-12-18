@@ -28,7 +28,7 @@ library(ggplot2)
 ```
 
 
-Caso não possua esses pacotes instalados você pode usar `install.packages('nome_pacote')` para instalá-los e depois carregue eles usando os comandos acima.
+Caso não possua esses pacotes instalados você pode usar `install.packages('nome_pacote')` para instalá-los e depois carregue eles usando os comandos acima. Além dos listados acima, será necessário que os pacotes `tidyr` e `dplyr` estejam instalados, entretanto, não é necessário carrega-los.
 
 Usaremos o pacote `quantmod` e `xts` para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:
 
