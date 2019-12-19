@@ -7,9 +7,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ## Usando o R
 
@@ -19,15 +17,14 @@ Para ilustrar a discussão teórica feita até aqui, vamos usar o R para calcula
 
 Inicialmente vamos carregar o pacote necessários:
 
-```{r ambiente, eval=TRUE, message=FALSE}
 
+```r
 library(ggplot2)
 library(magrittr)
 library(quantmod)
 library(xts)
 library(tseries)
 library(ggplot2)
-
 ```
 
 
@@ -42,8 +39,8 @@ Usaremos o pacote `quantmod` e `xts` para obter os dados de interesse e tratar-l
 
 Usaremos as funções do pacote `quantmod` para obter os preços diárias das ações entre outubro de 2016 e dezembro de 2019. Antes desse período, os dados do índice Bovespa apresenta muitos valores perdidos.
 
-```{r download_ativos, eval=FALSE}
 
+```r
 # Definindo parâmetros
 simbolos <- c("ITSA4.SA", "VVAR3.SA", "FNOR11.SA", "PETR4.SA", "BOVV11.SA")
 
@@ -56,7 +53,6 @@ ativos <- new.env()
 getSymbols(Symbols = simbolos, env = ativos, src = 'yahoo',
            from = startdate, to = enddate, auto.assign = TRUE)
 ativos <- as.list(ativos)
-
 ```
 
 Se tudo tiver corrido corretamente os dados das ações foram baixados em carregados no *environment* `ativos` que posteriormente foi transformando em uma lista. Usaremos lista frequentemente nesse exercício, elas simplificam bastante a transformação de dados ao permitir que uma operação seja realizada sobre todos os seu elementos usando a função `lappy()`. 
@@ -65,8 +61,8 @@ Se tudo tiver corrido corretamente os dados das ações foram baixados em carreg
 
 Agora que temos os dados, vamos realizar um processamento de modo a obter o retorno mensais dessas séries, mas antes disso vamos que criar algumas funções para nos auxiliar nisso:
 
-```{r funcoes_processamento, eval=TRUE}
 
+```r
 get_preco_fechamento <- function(x){
   ## Obtem preço de fechamento
   
@@ -95,15 +91,14 @@ xts_to_data.frame <- function(x){
   
   return(df)
 }
-
 ```
 
 Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício usaremos, o preço de fechamento do ativos e partir deles calcularemos o retorno mensal, por isso precisamos da função `get_preco_fechamento()`.
 
 Já a função `list_to_xts()` recebe uma lista de objetos `xts` e a transforma em apenas um objeto `xts` e, por fim, a função `xts_to_data.frame` transforma um objeto `xts` em um `data.frame` mantendo o período dos dados como uma coluna do `data.frame` resultante. A seguir, vamos calcular os retornos mensais dos ativos:
 
-```{r retorno_mensal, eval=FALSE}
 
+```r
 #Obtendo apenas os preços de fechamento
 ativos <- lapply(X = ativos, FUN = get_preco_fechamento)
 
@@ -116,34 +111,17 @@ carteira <- list_to_xts(retornos_men)
 # Transformando objeto xts em uma matriz e retirando dados perdidos
 carteira <-  as.matrix(carteira)
 carteira <- na.omit(carteira)
-
 ```
 
 Aplicando a função `get_preco_fechamento()` por meio da função `lapply()` obtemos uma lista com o preço de fechamento de cada ativo, procedimento semelhante foi feito para calcular o retorno mensal de cada ativo. Ao final, a matriz `carteira` representa a carteira contendo os retornos dos ativos. 
 
 ### Explorando dados
 
-```{r carrega_data, eval= TRUE, echo=FALSE, message=FALSE}
 
-# Carregando dados localmente para evitar usar o quantmod
-
-#-------------------------#
-# preços de fechamento
-precos <- read.csv2(file = 'dados/precos-fechamento.csv', stringsAsFactors = F)
-
-#-------------------------#
-# Retorno mensais dos ativos
-dados <- read.csv2('dados/retornos-mensais.csv')
-carteira  <- dados[, -1]
-carteira <- as.matrix(carteira)
-carteira <- na.omit(carteira)
-rm(dados)
-
-```
 Antes de prosseguirmos, vamos da uma olhada na evolução dos preços de fechamento dos ativos. Para isso vamos usar as seguintes funções:
 
-```{r funcoes_explorar_precos}
 
+```r
 precos_tidy <- function(data, periodo){
   ## Transforma os precos para o formato long
   
@@ -180,39 +158,59 @@ plot_precos <- function(data, periodo, filter = NULL){
       title = 'Evolução dos ativos'
     )
 }
-
 ```
 
 Os dados dos ativos estão organizados de forma que cada coluna representa uma ativo diferente, diz-se que os dados estão num formato `wide`. Entretanto, o `ggplot2` foi construído para seguir uma lógica em os dados estão no formato `long`, também chamado de `tidy`. Nesse caso, os dados sobre os ativos são organizados em duas colunas: uma conterá o nome do ativo e outra o preço da ação correspondente respeitando o período da observação. A função `precos_tidy()` faz justamente essa transformação.
 
 A função `plot_precos()` toma o preços no formato `long` e cria um gráfico usando as funções do `ggplot2`. A seguir, plotamos a evolução dos preços de fechamento das ações e calcular as correlações entres o preços.
 
-```{r explorando_precos, fig.align='center'}
 
+```r
 precos_ <- precos_tidy(precos, 'periodo')
 
 plot_precos(precos_, 'periodo')
+```
 
+<img src="fronteira-eficiente_files/figure-html/explorando_precos-1.png" style="display: block; margin: auto;" />
+
+```r
 # calculando correlação entre os preços
 m <- as.matrix(precos[, -1])
 m <- na.omit(m)
 cor(m)
+```
 
+```
+##            ABEV3      NATU3      PETR4     ITSA4
+## ABEV3  1.0000000 -0.3243479 -0.2361517 0.4825303
+## NATU3 -0.3243479  1.0000000  0.7464562 0.2422055
+## PETR4 -0.2361517  0.7464562  1.0000000 0.5854143
+## ITSA4  0.4825303  0.2422055  0.5854143 1.0000000
 ```
 
 Na tabela acima, cada célula representa a correlação entre os preços do ativo da linha com o ativo da coluna. Chama a atenção a alta correlação existente entre preços das ações da Petrobras, *PETR4*, e  da Natura *NATU3*. Correlação alcança o valor de 74,65%, isso é considerado relativamente alto. Isso é um pouco curioso, já que essas empresas são de setores diferentes. Tal relação fica mais clara no gráfico a seguir:
 
-```{r grafico_petr4_natu3, fig.align='center'}
 
+```r
 plot_precos(precos_, 'periodo', filter = c('PETR4', 'NATU3'))
-
 ```
+
+<img src="fronteira-eficiente_files/figure-html/grafico_petr4_natu3-1.png" style="display: block; margin: auto;" />
 
 Os dois ativos apresentam a tendência de queda entre 2013 e meados de 2016, após esse período passa a ter uma tendência ascendente. Talvez a mudança de governo ocorrido em 2016 tenha sido um motivo relevante para esse comportamento. A apesar de tudo isso, a mesma relação não se mantem quando calculamos a correlação entre os retornos. Quando fazemos esse cálculo percebemos que a maior correlação ocorre entre *PETR4* e *ITSA4* como pode ser visto abaixo:
 
-```{r correlacao_retornos}
+
+```r
 # Correlação entre os retornos
 cor(carteira)
+```
+
+```
+##            ABEV3     NATU3      PETR4     ITSA4
+## ABEV3 1.00000000 0.1066042 0.06589754 0.3241655
+## NATU3 0.10660416 1.0000000 0.30124177 0.2985749
+## PETR4 0.06589754 0.3012418 1.00000000 0.6686894
+## ITSA4 0.32416546 0.2985749 0.66868936 1.0000000
 ```
 
 
@@ -222,8 +220,8 @@ O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conj
 
 Para facilitar esse trabalho vamos criar algumas funções:
 
-```{r funcoes_fronteira}
 
+```r
 carteira_otima <- function(ativos, retorno_desejado, shorts = FALSE){
   ## Calcula carteira ótima
   
@@ -255,13 +253,12 @@ get_risco <- function(res){
   
   sapply(res, `[[`, i = 'risco')
 }
-
 ```
 
 Vamos calcular o retorno esperados para o ativos e seus respectivos riscos e guardar tais informações em um `data.frame`. Após isso, vamos gerar um vetor de retornos desejados para as carteira ótimas a fim de gerar a fronteira eficiente.
 
-```{r dados_ativos}
 
+```r
 retornos_esperados <- apply(carteira, MARGIN = 2, mean)
 riscos <- apply(carteira, MARGIN = 2, sd)
 
@@ -275,13 +272,22 @@ ativos <- data.frame(
 ativos
 ```
 
+```
+##    acao      risco    retorno
+## 1 ABEV3 0.05395006 0.00815532
+## 2 NATU3 0.09332690 0.01254119
+## 3 PETR4 0.13895500 0.01134941
+## 4 ITSA4 0.07556379 0.01122900
+```
+
 De modo geral, os ativos com maior retorno possuem o maior risco também. A Via Varejo *VVAR3* apresenta o maior retorno, 2,9%, e o maior risco, 18,8%; já a Ambev (*ABEV3*) apresenta o menor retorno, 0,8%, com o menor risco 5,4%. Note que estamos estimando o retorno esperado dos ativos como sendo o média do retorno histórico, entretanto, essa é uma abordagem ingênua que implica em uma série de problemas como: não há garantias do que o que ocorreu no passado ocorrerá no futuro; dependendo do períodos observado, a média do retorno histórico é diferente.
 
 A função `carteira_otima()` toma como argumentos um conjunto de ativos e um retorno desejado e retorna a carteira com menor risco que possui o retorno igual ao retorno desejado. A fronteira eficiente é justamente o conjunto de carteiras com menor risco possível ao valor de retorno dado.
 
 Portanto, para gerar a fronteira eficiente será necessário gerar esse conjunto de carteira ótimas. Para tanto, é necessário gerar um retorno desejado para cada carteira ótima. A seguir serão gerando 50 retornos desejados para gerar 50 carteiras ótimas e construir a fronteira eficiente.
 
-```{r retornos_desejados}
+
+```r
 retorno_min <- 0.5*min(retornos_esperados)
 retorno_max <- 1.5*max(retornos_esperados)
 
@@ -290,8 +296,8 @@ retornos_seq <- seq(retorno_min, retorno_max, length.out = 50)
 
 O menor retorno esperado tem a metade do retorno do ativo com menor retorno e o maior tem a metade a mais que do retorno esperado do ativo de maior rendimento. Assim, foram gerados 50 retornos desejados igualmente espaçados, a seguir calculamos as carteiras da fronteira.
 
-```{r fronteira_dados}
 
+```r
 # Primeira com todos os ativos
 fronteira <- lapply(
   X = retornos_seq,
@@ -320,8 +326,8 @@ dados_plot <- data.frame(
 
 O `data.frame` `dados_plot` contêm o dados de risco e retorno das carteiras ótimas. Com eles é possível plotar a fronteira eficiente, como poder ser visto no gráfico a seguir:
 
-```{r fronteira_plot, fig.align='center'}
 
+```r
 # Plotando fronteira eficiente
 dados_plot %>% 
   ggplot(aes(x = retorno, y = risco, color = '#E7B800'))+
@@ -337,9 +343,9 @@ dados_plot %>%
     color = ''
   )+
   theme(legend.position = 'none')
-
-
 ```
+
+<img src="fronteira-eficiente_files/figure-html/fronteira_plot-1.png" style="display: block; margin: auto;" />
 
 A fronteira na mais escura foi construída a partir dos ativos *ABEV3*, *PETR4* e *ITSA4*, já a fronteira laranja foi construída com os mesmo ativos mais a ativo *NATU3*. A Nova fronteira ficou mais à esquerda que a anterior, portanto, é possível obter o mesmo retorno com uma risco menor por meio dessa nova nova fronteira eficiente. Tais resultados só são possíveis devido aos efeitos da diversificação: ao aumentar a quantidade de ativos na carteira o risco cai mais que os retornos ponderados.
 
