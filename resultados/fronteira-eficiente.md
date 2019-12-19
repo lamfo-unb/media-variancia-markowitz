@@ -93,7 +93,7 @@ xts_to_data.frame <- function(x){
 }
 ```
 
-Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício usaremos, o preço de fechamento do ativos e partir deles calcularemos o retorno mensal, por isso precisamos da função `get_preco_fechamento()`.
+Na lista `ativos` estão os dados de transações de cada ativo na bolsa em objetos `xts`. Em cada objeto `xts` estão guardados informações como o menor preço alcançado pela ação no dia, o maior preço alcançado, o preço do ativo na abertura do pregão, o preço de fechamento e outras informações. Para nosso exercício, usaremos o preços de fechamento dos ativos e partir deles calcularemos os retornos mensais, por isso, precisamos da função `get_preco_fechamento()`.
 
 Já a função `list_to_xts()` recebe uma lista de objetos `xts` e a transforma em apenas um objeto `xts` e, por fim, a função `xts_to_data.frame` transforma um objeto `xts` em um `data.frame` mantendo o período dos dados como uma coluna do `data.frame` resultante. A seguir, vamos calcular os retornos mensais dos ativos:
 
@@ -118,7 +118,7 @@ Aplicando a função `get_preco_fechamento()` por meio da função `lapply()` ob
 ### Explorando dados
 
 
-Antes de prosseguirmos, vamos da uma olhada na evolução dos preços de fechamento dos ativos. Para isso vamos usar as seguintes funções:
+Antes de prosseguirmos, vamos dar uma olhada na evolução dos preços de fechamento dos ativos. Para isso, usaremos as seguintes funções:
 
 
 ```r
@@ -160,7 +160,7 @@ plot_precos <- function(data, periodo, filter = NULL){
 }
 ```
 
-Os dados dos ativos estão organizados de forma que cada coluna representa uma ativo diferente, diz-se que os dados estão num formato `wide`. Entretanto, o `ggplot2` foi construído para seguir uma lógica em os dados estão no formato `long`, também chamado de `tidy`. Nesse caso, os dados sobre os ativos são organizados em duas colunas: uma conterá o nome do ativo e outra o preço da ação correspondente respeitando o período da observação. A função `precos_tidy()` faz justamente essa transformação.
+Os dados dos ativos estão organizados de forma que cada coluna representa uma ativo diferente, nesse caso, diz-se que os dados estão num formato `wide`. Entretanto, o `ggplot2` foi construído para seguir uma lógica em que os dados estão no formato `long`, também chamado de `tidy`. Nesse caso, os dados sobre os ativos são organizados em duas colunas: uma conterá o nome do ativo e outra o preço da ação correspondente respeitando o período da observação. A função `precos_tidy()` faz justamente essa transformação.
 
 A função `plot_precos()` toma o preços no formato `long` e cria um gráfico usando as funções do `ggplot2`. A seguir, plotamos a evolução dos preços de fechamento das ações e calcular as correlações entres o preços.
 
@@ -188,7 +188,7 @@ cor(m)
 ## ITSA4  0.4825303  0.2422055  0.5854143 1.0000000
 ```
 
-Na tabela acima, cada célula representa a correlação entre os preços do ativo da linha com o ativo da coluna. Chama a atenção a alta correlação existente entre preços das ações da Petrobras, *PETR4*, e  da Natura *NATU3*. Correlação alcança o valor de 74,65%, isso é considerado relativamente alto. Isso é um pouco curioso, já que essas empresas são de setores diferentes. Tal relação fica mais clara no gráfico a seguir:
+Na tabela acima, cada célula representa a correlação entre os preços do ativo da linha com o ativo da coluna. Chama a atenção a alta correlação existente entre preços das ações da Petrobras, *PETR4*, e  da Natura *NATU3*, que alcança o valor de 74,65%. Isso é um pouco curioso, já que essas empresas são de setores diferentes. Tal relação fica mais clara no gráfico a seguir:
 
 
 ```r
@@ -197,7 +197,7 @@ plot_precos(precos_, 'periodo', filter = c('PETR4', 'NATU3'))
 
 <img src="fronteira-eficiente_files/figure-html/grafico_petr4_natu3-1.png" style="display: block; margin: auto;" />
 
-Os dois ativos apresentam a tendência de queda entre 2013 e meados de 2016, após esse período passa a ter uma tendência ascendente. Talvez a mudança de governo ocorrido em 2016 tenha sido um motivo relevante para esse comportamento. A apesar de tudo isso, a mesma relação não se mantem quando calculamos a correlação entre os retornos. Quando fazemos esse cálculo percebemos que a maior correlação ocorre entre *PETR4* e *ITSA4* como pode ser visto abaixo:
+Os dois ativos apresentam a tendência de queda entre 2013 e meados de 2016, após esse período passa a ter uma tendência ascendente. Talvez a mudança de governo ocorrido em 2016 tenha sido um motivo relevante para esse comportamento. A apesar de tudo isso, a mesma relação não se mantém quando calculamos a correlação entre os retornos. Quando fazemos esse cálculo, percebemos que a maior correlação ocorre entre *PETR4* e *ITSA4* como pode ser visto abaixo:
 
 
 ```r
@@ -216,9 +216,9 @@ cor(carteira)
 
 ### Calculando fronteira eficiente
 
-O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância. Vamos usar essa função para calcular a fronteira eficiente para o 5 ativos escolhidos.
+O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância e retorna uma lista com os pesos de cada ativo na carteira ótima, o risco e o retorno esperado. Vamos usar essa função para calcular a fronteira eficiente para o 4 ativos escolhidos.
 
-Para facilitar esse trabalho vamos criar algumas funções:
+Para facilitar esse trabalho, vamos criar algumas funções:
 
 
 ```r
@@ -280,9 +280,11 @@ ativos
 ## 4 ITSA4 0.07556379 0.01122900
 ```
 
-De modo geral, os ativos com maior retorno possuem o maior risco também. A Via Varejo *VVAR3* apresenta o maior retorno, 2,9%, e o maior risco, 18,8%; já a Ambev (*ABEV3*) apresenta o menor retorno, 0,8%, com o menor risco 5,4%. Note que estamos estimando o retorno esperado dos ativos como sendo o média do retorno histórico, entretanto, essa é uma abordagem ingênua que implica em uma série de problemas como: não há garantias do que o que ocorreu no passado ocorrerá no futuro; dependendo do períodos observado, a média do retorno histórico é diferente.
+Note que estamos estimando o retorno esperado dos ativos como sendo o média do retorno histórico, entretanto, essa é uma abordagem ingênua que implica em uma série de problemas como: não há garantias do que o que ocorreu no passado ocorrerá no futuro; dependendo do períodos observado, a média do retorno histórico é diferente.
 
-A função `carteira_otima()` toma como argumentos um conjunto de ativos e um retorno desejado e retorna a carteira com menor risco que possui o retorno igual ao retorno desejado. A fronteira eficiente é justamente o conjunto de carteiras com menor risco possível ao valor de retorno dado.
+As ações da *ABEV3* a presentaram o menor retorno esperado, 0,8%, e o menor risco 5,4%. Já *NATU3* apresenta o maior retorno esperado, 1,25%, entretanto, não apresenta o maior risco. Nesse caso, a máxima de que um maior risco implica em uma maior retorno nem sempre é válida quando estamos avaliando ativos individuais. Esse fato pode ser explicado pela distinção entre risco diversificável - indissiocrático - e não diversificável - risco sistêmico.
+
+Para calcular a fronteira usaremos a função `carteira_otima()`. Ela toma como argumentos um conjunto de ativos e um retorno desejado e retorna a carteira com menor risco que possui o retorno igual ao retorno desejado. A fronteira eficiente é justamente o conjunto de carteiras com menor risco possível ao valor de retorno dado.
 
 Portanto, para gerar a fronteira eficiente será necessário gerar esse conjunto de carteira ótimas. Para tanto, é necessário gerar um retorno desejado para cada carteira ótima. A seguir serão gerando 50 retornos desejados para gerar 50 carteiras ótimas e construir a fronteira eficiente.
 
@@ -347,5 +349,5 @@ dados_plot %>%
 
 <img src="fronteira-eficiente_files/figure-html/fronteira_plot-1.png" style="display: block; margin: auto;" />
 
-A fronteira na mais escura foi construída a partir dos ativos *ABEV3*, *PETR4* e *ITSA4*, já a fronteira laranja foi construída com os mesmo ativos mais a ativo *NATU3*. A Nova fronteira ficou mais à esquerda que a anterior, portanto, é possível obter o mesmo retorno com uma risco menor por meio dessa nova nova fronteira eficiente. Tais resultados só são possíveis devido aos efeitos da diversificação: ao aumentar a quantidade de ativos na carteira o risco cai mais que os retornos ponderados.
+A fronteira mais escura foi construída a partir dos ativos *ABEV3*, *PETR4* e *ITSA4*, já a fronteira laranja foi construída com os mesmo ativos mais o ativo *NATU3*. A nova fronteira ficou mais à esquerda que a anterior, portanto, é possível obter o mesmo retorno com uma risco menor por meio dessa nova nova fronteira eficiente. Tais resultados são possíveis devido aos efeitos da diversificação: ao aumentar a quantidade de ativos na carteira, o risco cai mais que os retornos ponderados dos ativos.
 
