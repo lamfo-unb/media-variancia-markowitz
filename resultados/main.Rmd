@@ -1,0 +1,28 @@
+---
+title: "Markowitz - Seleção de carteiras"
+author: "Alícia, Neuremberg e Sarah"
+date: "8 de janeiro de 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r child='risco-retorno.Rmd'}
+
+```
+
+
+```{r child='risco-diversificacao.Rmd'}
+
+```
+
+```{r child='escolha-fronteira-eficiente.Rmd'}
+
+```
+
+```{r child='fronteira-eficiente.Rmd'}
+
+```

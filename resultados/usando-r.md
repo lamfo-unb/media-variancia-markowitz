@@ -7,13 +7,15 @@ output:
     keep_md: true
 ---
 
+<!-- # ```{r setup, include=FALSE} -->
+<!-- # knitr::opts_chunk$set(echo = TRUE) -->
+<!-- # ``` -->
 
-
-## Usando o R
+### Usando o R
 
 Para ilustrar a discussão teórica feita até aqui, vamos usar o R para calcular uma fronteira eficiente para um conjunto de ativos.
 
-### Obtendo dados
+#### Obtendo dados
 
 Inicialmente vamos carregar o pacote necessários:
 
@@ -57,7 +59,7 @@ ativos <- as.list(ativos)
 
 Se tudo tiver corrido corretamente os dados das ações foram baixados em carregados no *environment* `ativos` que posteriormente foi transformando em uma lista. Usaremos lista frequentemente nesse exercício, elas simplificam bastante a transformação de dados ao permitir que uma operação seja realizada sobre todos os seu elementos usando a função `lappy()`. 
 
-### Processando os dados
+#### Processando os dados
 
 Agora que temos os dados, vamos realizar um processamento de modo a obter o retorno mensais dessas séries, mas antes disso vamos que criar algumas funções para nos auxiliar nisso:
 
@@ -115,7 +117,7 @@ carteira <- na.omit(carteira)
 
 Aplicando a função `get_preco_fechamento()` por meio da função `lapply()` obtemos uma lista com o preço de fechamento de cada ativo, procedimento semelhante foi feito para calcular o retorno mensal de cada ativo. Ao final, a matriz `carteira` representa a carteira contendo os retornos dos ativos. 
 
-### Explorando dados
+#### Explorando dados
 
 
 Antes de prosseguirmos, vamos dar uma olhada na evolução dos preços de fechamento dos ativos. Para isso, usaremos as seguintes funções:
@@ -171,7 +173,7 @@ precos_ <- precos_tidy(precos, 'periodo')
 plot_precos(precos_, 'periodo')
 ```
 
-<img src="fronteira-eficiente_files/figure-html/explorando_precos-1.png" style="display: block; margin: auto;" />
+<img src="usando-r_files/figure-html/explorando_precos-1.png" style="display: block; margin: auto;" />
 
 ```r
 # calculando correlação entre os preços
@@ -195,7 +197,7 @@ Na tabela acima, cada célula representa a correlação entre os preços do ativ
 plot_precos(precos_, 'periodo', filter = c('PETR4', 'NATU3'))
 ```
 
-<img src="fronteira-eficiente_files/figure-html/grafico_petr4_natu3-1.png" style="display: block; margin: auto;" />
+<img src="usando-r_files/figure-html/grafico_petr4_natu3-1.png" style="display: block; margin: auto;" />
 
 Os dois ativos apresentam a tendência de queda entre 2013 e meados de 2016, após esse período passa a ter uma tendência ascendente. Talvez a mudança de governo ocorrido em 2016 tenha sido um motivo relevante para esse comportamento. A apesar de tudo isso, a mesma relação não se mantém quando calculamos a correlação entre os retornos. Quando fazemos esse cálculo, percebemos que a maior correlação ocorre entre *PETR4* e *ITSA4* como pode ser visto abaixo:
 
@@ -214,7 +216,7 @@ cor(carteira)
 ```
 
 
-### Calculando fronteira eficiente
+#### Calculando fronteira eficiente
 
 O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância e retorna uma lista com os pesos de cada ativo na carteira ótima, o risco e o retorno esperado. Vamos usar essa função para calcular a fronteira eficiente para o 4 ativos escolhidos.
 
@@ -347,7 +349,7 @@ dados_plot %>%
   theme(legend.position = 'none')
 ```
 
-<img src="fronteira-eficiente_files/figure-html/fronteira_plot-1.png" style="display: block; margin: auto;" />
+<img src="usando-r_files/figure-html/fronteira_plot-1.png" style="display: block; margin: auto;" />
 
 A fronteira mais escura foi construída a partir dos ativos *ABEV3*, *PETR4* e *ITSA4*, já a fronteira laranja foi construída com os mesmo ativos mais o ativo *NATU3*. A nova fronteira ficou mais à esquerda que a anterior, portanto, é possível obter o mesmo retorno com uma risco menor por meio dessa nova nova fronteira eficiente. Tais resultados são possíveis devido aos efeitos da diversificação: ao aumentar a quantidade de ativos na carteira, o risco cai mais que os retornos ponderados dos ativos.
 

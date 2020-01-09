@@ -7,9 +7,9 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+<!-- # ```{r setup, include=FALSE} -->
+<!-- # knitr::opts_chunk$set(echo = TRUE) -->
+<!-- # ``` -->
 
 ### Definição de risco e retorno
 
