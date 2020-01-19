@@ -5,7 +5,6 @@ rm(list = ls())
 library(ggplot2)
 library(magrittr)
 library(tseries)
-#library(quantmod)
 
 # Carregando dados--------------------------------------------------------------
 dados <- read.csv2('dados/retornos-mensais.csv')
@@ -43,8 +42,11 @@ carteira_otima <- function(ativos, retorno_esperado, shorts = FALSE){
     shorts = shorts
   )
   
+  pesos <- s[['pw']]
+  names(pesos) <- colnames(ativos)
+  
   res <- list(
-    pesos = s[['pw']],
+    pesos = pesos,
     retorno = s[['pm']],
     risco = s[['ps']]
   )
