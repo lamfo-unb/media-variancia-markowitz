@@ -374,10 +374,15 @@ summary {
 <!-- # ``` -->
 <div id="usando-o-r" class="section level3">
 <h3>Usando o R</h3>
-<p>Para ilustrar a discussão teórica feita até aqui, vamos usar o R para calcular uma fronteira eficiente para um conjunto de ativos.</p>
+<p><strong>TODO</strong></p>
+<ul>
+<li><p>Detalhar um pouco mais os argumentos da função <code>portfolio.optim(.)</code>. Por exemplo, ela assume que há venda a descoberto caso o usuário não especifique? “shorts” varia entre TRUE e FALSE ao longo do post - verificar</p></li>
+<li><p>Mostrar um caso do output da função <code>carteira_otima(.)</code></p></li>
+</ul>
+<p>Para ilustrar a discussão teórica feita até aqui, será usado o R para calcular uma fronteira eficiente para um conjunto de ativos.</p>
 <div id="obtendo-dados" class="section level4">
 <h4>Obtendo dados</h4>
-<p>Inicialmente vamos carregar o pacote necessários:</p>
+<p>Será necessário carregar os seguintes pacotes:</p>
 <pre class="r"><code>library(ggplot2)
 library(magrittr)
 library(quantmod)
@@ -385,7 +390,7 @@ library(xts)
 library(tseries)
 library(ggplot2)</code></pre>
 <p>Caso não possua esses pacotes instalados você pode usar <code>install.packages('nome_pacote')</code> para instalá-los e depois carregue eles usando os comandos acima. Além dos listados acima, será necessário que os pacotes <code>tidyr</code> e <code>dplyr</code> estejam instalados, entretanto, não é necessário carrega-los.</p>
-<p>Usaremos o pacote <code>quantmod</code> e <code>xts</code> para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:</p>
+<p>Usaremos os pacotes <code>quantmod</code> e <code>xts</code> para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:</p>
 <ul>
 <li>ITSA4 - Itaú SA Investimentos;</li>
 <li>NATU3 - Natura;</li>
@@ -522,7 +527,9 @@ cor(carteira)</code></pre>
 </div>
 <div id="calculando-fronteira-eficiente" class="section level4">
 <h4>Calculando fronteira eficiente</h4>
-<p>O pacote <code>tseries</code> possui uma função chamada <code>portfolio.optim()</code>. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância e retorna uma lista com os pesos de cada ativo na carteira ótima, o risco e o retorno esperado. Vamos usar essa função para calcular a fronteira eficiente para o 4 ativos escolhidos.</p>
+<p>O pacote <code>tseries</code> possui uma função chamada <code>portfolio.optim()</code>. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância e retorna uma lista com os pesos de cada ativo na carteira ótima, o risco e o retorno esperado.</p>
+<p>Usaremos essa função para calcular a fronteira eficiente para o 4 ativos escolhidos. Para o nosso objetivo, três argumentos será de particular interesse: <code>x</code>, <code>pm</code> e <code>shorts</code>. O argumento <code>x</code> recebe uma matriz com os retornos históricos dos ativos em cada coluna é uma ativo diferente; <code>pm</code> recebe o retorno desejado para carteira ótima escolhida e <code>shorts</code> recebe <code>TRUE</code> ou <code>FALSE</code>, <code>TRUE</code> quando é permitido a venda a descoberto de ativos e <code>FALSE</code> quando não.</p>
+<p>A venda a descoberta consiste na venda de uma ação que o investidor não possui na sua carteira. Neste caso o peso correspondente à essa ação na carteira será negativa. Operar com venda a descoberta é útil quando se deseja alcançar um retorno que é maior (menor) que o maior (menor) retorno do ativo de maior (menor) retorno na carteira.</p>
 <p>Para facilitar esse trabalho, vamos criar algumas funções:</p>
 <pre class="r"><code>carteira_otima &lt;- function(ativos, retorno_desejado, shorts = FALSE){
   ## Calcula carteira ótima
@@ -532,9 +539,12 @@ cor(carteira)</code></pre>
     pm = retorno_desejado,
     shorts = shorts
   )
+
+  pesos &lt;- s[['pw']]
+  names(pesos) &lt;- colnames(ativos)
   
   res &lt;- list(
-    pesos = s[['pw']],
+    pesos = pesos,
     retorno = s[['pm']],
     risco = s[['ps']]
   )
@@ -555,6 +565,18 @@ get_risco &lt;- function(res){
   
   sapply(res, `[[`, i = 'risco')
 }</code></pre>
+<p>Assim, a carteira ótima que tem o retorno mensal esperado de <span class="math inline">\(1\%\)</span> seria dada por:</p>
+<pre class="r"><code>carteira_otima(ativos = carteira, retorno_desejado = .01, shorts = FALSE)</code></pre>
+<pre><code>## $pesos
+##     ABEV3     NATU3     PETR4     ITSA4 
+## 0.5035733 0.2429710 0.0000000 0.2534557 
+## 
+## $retorno
+## [1] 0.01
+## 
+## $risco
+## [1] 0.04844689</code></pre>
+<p>Sendo <code>pesos</code> a participação de cada ativo na carteira ótima, <code>retorno</code> o retorno esperado e <code>risco</code> o desvio padrão esperado.</p>
 <p>Vamos calcular o retorno esperados para o ativos e seus respectivos riscos e guardar tais informações em um <code>data.frame</code>. Após isso, vamos gerar um vetor de retornos desejados para as carteira ótimas a fim de gerar a fronteira eficiente.</p>
 <pre class="r"><code>retornos_esperados &lt;- apply(carteira, MARGIN = 2, mean)
 riscos &lt;- apply(carteira, MARGIN = 2, sd)
@@ -573,14 +595,15 @@ ativos</code></pre>
 ## 3 PETR4 0.13895500 0.01134941
 ## 4 ITSA4 0.07556379 0.01122900</code></pre>
 <p>Note que estamos estimando o retorno esperado dos ativos como sendo o média do retorno histórico, entretanto, essa é uma abordagem ingênua que implica em uma série de problemas como: não há garantias do que o que ocorreu no passado ocorrerá no futuro; dependendo do períodos observado, a média do retorno histórico é diferente.</p>
-<p>As ações da <em>ABEV3</em> a presentaram o menor retorno esperado, 0,8%, e o menor risco 5,4%. Já <em>NATU3</em> apresenta o maior retorno esperado, 1,25%, entretanto, não apresenta o maior risco. Nesse caso, a máxima de que um maior risco implica em uma maior retorno nem sempre é válida quando estamos avaliando ativos individuais. Esse fato pode ser explicado pela distinção entre risco diversificável - indissiocrático - e não diversificável - risco sistêmico.</p>
+<p>As ações da <em>ABEV3</em> a presentaram o menor retorno esperado, 0,8%, e o menor risco 5,4%. Já <em>NATU3</em> apresenta o maior retorno esperado, 1,25%, entretanto, não apresenta o maior risco. Nesse caso, a máxima de que um maior risco implica em uma maior retorno nem sempre é válida quando estamos avaliando ativos individuais. Esse fato pode ser explicado pela distinção entre risco diversificável - idiossincrático - e não diversificável - risco sistêmico.</p>
 <p>Para calcular a fronteira usaremos a função <code>carteira_otima()</code>. Ela toma como argumentos um conjunto de ativos e um retorno desejado e retorna a carteira com menor risco que possui o retorno igual ao retorno desejado. A fronteira eficiente é justamente o conjunto de carteiras com menor risco possível ao valor de retorno dado.</p>
 <p>Portanto, para gerar a fronteira eficiente será necessário gerar esse conjunto de carteira ótimas. Para tanto, é necessário gerar um retorno desejado para cada carteira ótima. A seguir serão gerando 50 retornos desejados para gerar 50 carteiras ótimas e construir a fronteira eficiente.</p>
 <pre class="r"><code>retorno_min &lt;- 0.5*min(retornos_esperados)
 retorno_max &lt;- 1.5*max(retornos_esperados)
 
 retornos_seq &lt;- seq(retorno_min, retorno_max, length.out = 50)</code></pre>
-<p>O menor retorno esperado tem a metade do retorno do ativo com menor retorno e o maior tem a metade a mais que do retorno esperado do ativo de maior rendimento. Assim, foram gerados 50 retornos desejados igualmente espaçados, a seguir calculamos as carteiras da fronteira.</p>
+<p>O menor retorno esperado tem a metade do retorno do ativo com menor retorno e o maior tem a metade a mais que do retorno esperado do ativo de maior rendimento. Assim, foram gerados 50 retornos desejados igualmente espaçados.</p>
+<p>A seguir calcularemos as carteiras da fronteira. Como há retornos desejados abaixo e acima dos retornos mínimo e máximo dos ativos na carteira usaremos <code>short = TRUE</code>.</p>
 <pre class="r"><code># Primeira com todos os ativos
 fronteira &lt;- lapply(
   X = retornos_seq,

@@ -13,11 +13,16 @@ output:
 
 ### Usando o R
 
-Para ilustrar a discussão teórica feita até aqui, vamos usar o R para calcular uma fronteira eficiente para um conjunto de ativos.
+**TODO**
+
+* Mencionar repositório do projeto no git
+
+
+Para ilustrar a discussão teórica feita até aqui, será usado o R para calcular uma fronteira eficiente para um conjunto de ativos.
 
 #### Obtendo dados
 
-Inicialmente vamos carregar o pacote necessários:
+Será necessário carregar os seguintes pacotes:
 
 ```{r ambiente, eval=TRUE, message=FALSE}
 
@@ -33,7 +38,7 @@ library(ggplot2)
 
 Caso não possua esses pacotes instalados você pode usar `install.packages('nome_pacote')` para instalá-los e depois carregue eles usando os comandos acima. Além dos listados acima, será necessário que os pacotes `tidyr` e `dplyr` estejam instalados, entretanto, não é necessário carrega-los.
 
-Usaremos o pacote `quantmod` e `xts` para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:
+Usaremos os pacotes `quantmod` e `xts` para obter os dados de interesse e tratar-los para o objetivo que desejamos. Assim, para o exercício, vamos obter o dados para as seguintes ativos:
 
 * ITSA4 - Itaú SA Investimentos;
 * NATU3 - Natura;
@@ -218,7 +223,11 @@ cor(carteira)
 
 #### Calculando fronteira eficiente
 
-O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância e retorna uma lista com os pesos de cada ativo na carteira ótima, o risco e o retorno esperado. Vamos usar essa função para calcular a fronteira eficiente para o 4 ativos escolhidos.
+O pacote `tseries` possui uma função chamada `portfolio.optim()`. Dado um conjunto de ativos e um retorno esperado para a carteira, ela calcula a carteira de menor variância e retorna uma lista com os pesos de cada ativo na carteira ótima, o risco e o retorno esperado.
+
+Usaremos essa função para calcular a fronteira eficiente para o 4 ativos escolhidos. Para o nosso objetivo, três argumentos será de particular interesse: `x`, `pm` e `shorts`. O argumento `x` recebe uma matriz com os retornos históricos dos ativos em cada coluna é uma ativo diferente; `pm` recebe o retorno desejado para carteira ótima escolhida e `shorts` recebe `TRUE` ou `FALSE`, `TRUE` quando é permitido a venda a descoberto de ativos e `FALSE` quando não.
+
+A venda a descoberta consiste na venda de uma ação que o investidor não possui na sua carteira. Neste caso o peso correspondente à essa ação na carteira será negativa. Operar com venda a descoberta é útil quando se deseja alcançar um retorno que é maior (menor) que o maior (menor) retorno do ativo de maior (menor) retorno na carteira.
 
 Para facilitar esse trabalho, vamos criar algumas funções:
 
@@ -232,9 +241,12 @@ carteira_otima <- function(ativos, retorno_desejado, shorts = FALSE){
     pm = retorno_desejado,
     shorts = shorts
   )
+
+  pesos <- s[['pw']]
+  names(pesos) <- colnames(ativos)
   
   res <- list(
-    pesos = s[['pw']],
+    pesos = pesos,
     retorno = s[['pm']],
     risco = s[['ps']]
   )
@@ -258,6 +270,14 @@ get_risco <- function(res){
 
 ```
 
+Assim, a carteira ótima que tem o retorno mensal esperado de $1\%$ seria dada por:
+
+```{r uso_funcao_careira_otima}
+carteira_otima(ativos = carteira, retorno_desejado = .01, shorts = FALSE)
+```
+
+Sendo `pesos` a participação de cada ativo na carteira ótima, `retorno` o retorno esperado e `risco` o desvio padrão esperado.
+
 Vamos calcular o retorno esperados para o ativos e seus respectivos riscos e guardar tais informações em um `data.frame`. Após isso, vamos gerar um vetor de retornos desejados para as carteira ótimas a fim de gerar a fronteira eficiente.
 
 ```{r dados_ativos}
@@ -277,7 +297,7 @@ ativos
 
 Note que estamos estimando o retorno esperado dos ativos como sendo o média do retorno histórico, entretanto, essa é uma abordagem ingênua que implica em uma série de problemas como: não há garantias do que o que ocorreu no passado ocorrerá no futuro; dependendo do períodos observado, a média do retorno histórico é diferente.
 
-As ações da *ABEV3* a presentaram o menor retorno esperado, 0,8%, e o menor risco 5,4%. Já *NATU3* apresenta o maior retorno esperado, 1,25%, entretanto, não apresenta o maior risco. Nesse caso, a máxima de que um maior risco implica em uma maior retorno nem sempre é válida quando estamos avaliando ativos individuais. Esse fato pode ser explicado pela distinção entre risco diversificável - indissiocrático - e não diversificável - risco sistêmico.
+As ações da *ABEV3* a presentaram o menor retorno esperado, 0,8%, e o menor risco 5,4%. Já *NATU3* apresenta o maior retorno esperado, 1,25%, entretanto, não apresenta o maior risco. Nesse caso, a máxima de que um maior risco implica em uma maior retorno nem sempre é válida quando estamos avaliando ativos individuais. Esse fato pode ser explicado pela distinção entre risco diversificável - idiossincrático - e não diversificável - risco sistêmico.
 
 Para calcular a fronteira usaremos a função `carteira_otima()`. Ela toma como argumentos um conjunto de ativos e um retorno desejado e retorna a carteira com menor risco que possui o retorno igual ao retorno desejado. A fronteira eficiente é justamente o conjunto de carteiras com menor risco possível ao valor de retorno dado.
 
@@ -290,7 +310,9 @@ retorno_max <- 1.5*max(retornos_esperados)
 retornos_seq <- seq(retorno_min, retorno_max, length.out = 50)
 ```
 
-O menor retorno esperado tem a metade do retorno do ativo com menor retorno e o maior tem a metade a mais que do retorno esperado do ativo de maior rendimento. Assim, foram gerados 50 retornos desejados igualmente espaçados, a seguir calculamos as carteiras da fronteira.
+O menor retorno esperado tem a metade do retorno do ativo com menor retorno e o maior tem a metade a mais que do retorno esperado do ativo de maior rendimento. Assim, foram gerados 50 retornos desejados igualmente espaçados.
+
+A seguir calcularemos as carteiras da fronteira. Como há retornos desejados abaixo e acima dos retornos mínimo e máximo dos ativos na carteira usaremos `short = TRUE`.
 
 ```{r fronteira_dados}
 

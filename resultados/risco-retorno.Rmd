@@ -11,6 +11,7 @@ output:
 <!-- # knitr::opts_chunk$set(echo = TRUE) -->
 <!-- # ``` -->
 
+
 ### Definição de risco e retorno
 
 Considere uma série de preços de uma ação em que cada preço de refere a uma observação em um determinado período de tempo:
@@ -73,7 +74,9 @@ $$
   \sigma = (E[(R_i - \mu)^2])^{0,5}
 $$
 
-A discussão sobre a viabilidade de calcular o retorno a partir da definição se aplica também para o calculo do risco. Aqui será usado o desvio padrão histórico como estimador para o risco.
+O desvio padrão não é a única medida para avaliar risco. A semi-variância ou *downside risk* é outro exemplo de medida de risco. Ela formula a ideia de que a variância oriunda de retornos efetivos acima do retorno esperado não deveria ser computado como risco. Pois, quando o retorno efetivo for maior que o retorno esperado isso é um risco "bom", porém, o risco é em geral associado ao custo de manter determinado ativo.
+
+Nesse *post* será usado o desvio padrão como medida de risco. Além disso, cabe considerar que a discussão sobre a viabilidade de calcular o retorno a partir da definição se aplica também para o cálculo do risco. Dessa forma, será usado o desvio padrão histórico como estimador para o risco.
 
 ### Risco  e retorno para carteiras
 
