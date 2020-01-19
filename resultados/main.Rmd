@@ -23,6 +23,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-```{r child='fronteira-eficiente.Rmd'}
+```{r child='usando-r.Rmd'}
 
 ```
