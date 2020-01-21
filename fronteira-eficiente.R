@@ -6,39 +6,46 @@ library(ggplot2)
 library(magrittr)
 library(tseries)
 
-# Carregando dados--------------------------------------------------------------
-dados <- read.csv2('dados/retornos-mensais.csv')
-
-carteira  <- dados[,-1]
-carteira <- as.matrix(carteira)
-carteira <- na.omit(carteira)
-
-
-# Processando dados-------------------------------------------------------------
-
-# Risco e retornos esperados dos ativos
-retornos_esperados <- apply(carteira, MARGIN = 2, mean)
-riscos <- apply(carteira, MARGIN = 2, sd)
-
-ativos <- data.frame(
-  acao = names(retornos_esperados),
-  risco = riscos,
-  retorno = retornos_esperados
-)
-
-# Retornos desejados
-retorno_min <- 0.5*min(retornos_esperados)
-retorno_max <- 1.5*max(retornos_esperados)
-
-retornos_seq <- seq(retorno_min, retorno_max, length.out = 50)
-
 # Funções-----------------------------------------------------------------------
 
-carteira_otima <- function(ativos, retorno_esperado, shorts = FALSE){
+read_data <- function(path_arquivo){
+  ## path_arquivo: character(1)
+  
+  dados <- read.csv2(file = path_arquivo)
+  carteira <- dados[,-1]
+  carteira <- as.matrix(carteira)
+  carteira <- na.omit(carteira)
+  
+  return(carteira)
+}
+
+retornos_esperados_ativos <- function(carteira){
+  ## carteira: matrix
+  
+  apply(X = carteira, MARGIN = 2, FUN = mean)
+}
+
+riscos_ativos <- function(carteira){
+  ## carteira: matrix
+  
+  apply(X = carteira, MARGIN = 2, FUN = stats::sd)
+}
+
+simular_retornos_desejados <- function(retornos_ativos, num_retornos = 50){
+  ## retornos_ativos: numeric(n)
+  
+  retorno_min <- 0.5*min(retornos_ativos)
+  retorno_max <- 1.5*max(retornos_ativos)
+  
+  seq(retorno_min, retorno_max, length.out = num_retornos)
+}
+
+carteira_otima <- function(retornos_ativos, retorno_desejado, shorts = FALSE){
+  ## retornos_ativos: matrix, retorno_desejado: numeric(1), short: logic(1)
   
   s <- tseries::portfolio.optim(
-    x = ativos,
-    pm = retorno_esperado,
+    x = retornos_ativos,
+    pm = retorno_desejado,
     shorts = shorts
   )
   
@@ -54,35 +61,52 @@ carteira_otima <- function(ativos, retorno_esperado, shorts = FALSE){
   return(res)
 }
 
-
 get_retorno <- function(res){
+  ## res: list
   
   sapply(res, `[[`, i = 'retorno')
 }
 
 get_risco <- function(res){
+  ## res: list
   
   sapply(res, `[[`, i = 'risco')
 }
 
+# Carregando dados--------------------------------------------------------------
 
-# Gráficos----------------------------------------------------------------------
+carteira <- read_data('dados/retornos-mensais.csv')
 
-# primeira fronteira
+# Processando dados-------------------------------------------------------------
+
+# Risco e retornos esperados dos ativos
+retornos_esperados <- retornos_esperados_ativos(carteira)
+riscos <- riscos_ativos(carteira)
+
+ativos <- data.frame(
+  acao = names(retornos_esperados),
+  risco = riscos,
+  retorno = retornos_esperados
+)
+
+retornos_seq <- simular_retornos_desejados(retornos_esperados)
+
+# Calculando fronteiras---------------------------------------------------------
+
+# Fronteira com todos os ativos
 fronteira <- lapply(
   X = retornos_seq,
   FUN = carteira_otima,
-  ativos = carteira,
+  retornos_ativos = carteira,
   shorts = TRUE
 )
 
 # Fronteira sem NATU3
 nomes_ativ <- c("ABEV3", "PETR4", "ITSA4")
-
 fronteira2 <- lapply(
   X = retornos_seq,
   FUN = carteira_otima,
-  ativos = carteira[, nomes_ativ],
+  retornos_ativos = carteira[, nomes_ativ],
   shorts = TRUE
 )
 
@@ -94,7 +118,9 @@ dados_plot <- data.frame(
   risco2 = get_risco(fronteira2)
 )
 
-# 
+# Gráficos----------------------------------------------------------------------
+
+# Plotando as fronteiras eficientes 
 dados_plot %>% 
   ggplot(aes(x = retorno, y = risco, color = '#E7B800'))+
   geom_line(size = 1)+

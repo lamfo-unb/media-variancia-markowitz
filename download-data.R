@@ -4,15 +4,13 @@
 rm(list = ls())
 library(quantmod)
 
-
 # Download----------------------------------------------------------------------
 
 # Definindo parâmetros
-#simbolos <- c("ITSA4.SA", "VVAR3.SA", "NATU3.SA", "PETR4.SA", "ABEV3.SA")
 simbolos <- c("ITSA4.SA", "NATU3.SA", "PETR4.SA", "ABEV3.SA")
 
-startdate <-  '2011-12-15' # Sys.Date() - 730
-enddate <- '2019-12-15' # Sys.Date()
+startdate <-  '2011-12-15'
+enddate <- '2019-12-15'
 
 # Fazendo download
 ativos <- new.env()
@@ -52,7 +50,6 @@ xts_to_data.frame <- function(x){
   row.names(df) <- NULL
   
   return(df)
-  
 }
 
 retornos_esperados <- function(x, na.rm = FALSE){
@@ -61,7 +58,6 @@ retornos_esperados <- function(x, na.rm = FALSE){
   stopifnot(is.matrix(x))
   
   apply(X = x, MARGIN = 2, mean, na.rm = na.rm)
-  
 }
 
 # Processamento-----------------------------------------------------------------

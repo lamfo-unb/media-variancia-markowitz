@@ -3,6 +3,7 @@
 # Ambiente----------------------------------------------------------------------
 rm(list = ls())
 library(ggplot2)
+library(dplyr)
 
 # Dados-------------------------------------------------------------------------
 precos <- read.csv2(file = 'dados/precos-fechamento.csv', stringsAsFactors = F)
@@ -51,7 +52,6 @@ plot_precos <- function(data, periodo, filter = NULL){
 df_ <- precos_tidy(precos, 'periodo')
 
 plot_precos(df_, 'periodo', filter = c('ABEV3', 'NATU3', 'PETR4'))
-
 
 df_ %>% 
   ggplot(aes(x = precos))+
